@@ -10,17 +10,19 @@ pipeline {
         stage('Docker Build') {
             steps {
                 script {
-                    // Build the Docker image
-                    sh "docker build . --file Dockerfile --tag docker.io/prasanthk8/python-webapp:latest"
+                    // Set the workspace to /home/ec2-user
+                    dir('/home/ec2-user') {
+                        // Build the Docker image
+                        sh "docker build . --file Dockerfile --tag docker.io/prasanthk8/python-webapp:latest"
+                    }
                 }
             }
         }
         stage('Docker Push') {
             steps {
                 script {
-                    // Push the Docker image to the registry
                     withDockerRegistry(credentialsId: 'DockerCred', toolName: 'docker') {
-                        sh "docker push docker.io/prasanthk8/python-webapp:latest"
+                        sh "make push"
                     }
                 }
             }
@@ -28,8 +30,8 @@ pipeline {
         stage('Docker Deploy') {
             steps {
                 script {
-                    // Run the Docker container
                     withDockerRegistry(credentialsId: 'DockerCred', toolName: 'docker') {
+                        sh "docker images"
                         sh "docker run -d -it -p 5000:5000 --name FlaskApp prasanthk8/python-webapp:latest"
                     }
                 }
