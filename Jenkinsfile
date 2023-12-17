@@ -10,32 +10,22 @@ pipeline {
         stage('Docker Build') {
             steps {
                 script {
-                    // Set the workspace to /home/ec2-user
-                    dir('/home/ec2-user') {
-                        // Build the Docker image
-                        sh "docker build . --file Dockerfile --tag docker.io/prasanthk8/python-webapp:latest"
+                    def dockerfilePath = '/home/ec2-user/Dockerfile'
+                    def imageTag = 'docker.io/prasanthk8/python-webapp:latest'
+                    
+                    // Check if the Dockerfile exists
+                    if (fileExists(dockerfilePath)) {
+                        // Check if the directory exists, create if not
+                        dir('/home/ec2-user') {
+                            // Build the Docker image
+                            sh "docker build . --file $dockerfilePath --tag $imageTag"
+                        }
+                    } else {
+                        error "Dockerfile not found at $dockerfilePath"
                     }
                 }
             }
         }
-        stage('Docker Push') {
-            steps {
-                script {
-                    withDockerRegistry(credentialsId: 'DockerCred', toolName: 'docker') {
-                        sh "make push"
-                    }
-                }
-            }
-        }
-        stage('Docker Deploy') {
-            steps {
-                script {
-                    withDockerRegistry(credentialsId: 'DockerCred', toolName: 'docker') {
-                        sh "docker images"
-                        sh "docker run -d -it -p 5000:5000 --name FlaskApp prasanthk8/python-webapp:latest"
-                    }
-                }
-            }
-        }
+        // Add your Docker Push and Docker Deploy stages here...
     }
 }
